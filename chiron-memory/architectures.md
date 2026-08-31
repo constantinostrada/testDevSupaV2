@@ -2,26 +2,10 @@
 
 A structural/design choice: layers, module boundaries, where things live.
 
-## Storage y UI separados: `js/storage.js` es la única puerta a los datos
+## sw.js hace precache del app shell (index.html, styles.css, js/app.js, js/storage.js, mani…
 
-**What** · `js/storage.js` expone el modelo, las categorías y el CRUD
-(`listExpenses`, `addExpense`, `removeExpense`) más los helpers de monto y
-fecha. `js/app.js` es solo render y eventos: nunca toca `localStorage` ni
-`amountCents` directamente.
-**Why** · Las funciones que siguen (alta rápida, lista por mes, resumen
-mensual) van a sumar vistas sobre los mismos datos. Con la lectura y validación
-en un solo lugar, cada vista nueva es UI y nada más, y la exportación a archivo
-tiene un único punto del que colgarse.
-**Where** · `js/storage.js`, `js/app.js`.
-**Learned** · 2026-08-31.
+What: sw.js hace precache del app shell (index.html, styles.css, js/app.js, js/storage.js, manifest.webmanifest, icon.svg) con estrategia cache-first para los assets propios, sin ningún prompt de instalación ni llamadas a servidor propio · Why: — · Where: sw.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-11 -->
 
-## La UI actual es un andamio deliberado
+## js/storage.js es la única puerta de acceso a los datos persistidos; js/app.js nunca toca…
 
-**What** · El formulario desplegable y la lista plana de `js/app.js` existen
-para que la base sea verificable de punta a punta, no como diseño final. Las
-tareas de alta en dos toques, lista filtrable por mes y resumen mensual las
-reemplazan.
-**Why** · Evita que alguien más adelante trate esta UI como una decisión de
-producto a preservar.
-**Where** · `js/app.js` (comentario de cabecera).
-**Learned** · 2026-08-31.
+What: js/storage.js es la única puerta de acceso a los datos persistidos; js/app.js nunca toca localStorage directamente · Why: mantener la capa de persistencia aislada y testeable, y dejar el terreno listo para futuras migraciones o cambios de storage · Where: js/storage.js, js/app.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-3 -->
