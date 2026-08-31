@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gastos">
+  <rect width="512" height="512" rx="112" fill="#12141a"/>
+  <path d="M256 104v304M330 168c-16-20-44-30-78-30-44 0-74 22-74 56 0 32 24 48 74 58s78 26 78 60c0 36-32 58-80 58-38 0-68-12-84-34"
+        fill="none" stroke="#6ea8fe" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,313 @@
+/* Mobile-first y de una sola mano: una columna, controles en la mitad
+   inferior, targets tactiles de 44px o mas, nada que desborde a lo ancho. */
+
+:root {
+  --bg: #12141a;
+  --surface: #1c1f28;
+  --surface-2: #262a35;
+  --text: #f2f3f7;
+  --text-dim: #9aa1b1;
+  --accent: #6ea8fe;
+  --accent-text: #0d1b33;
+  --danger: #ff7b72;
+  --border: #303542;
+  --radius: 14px;
+  --tap: 48px;
+  --pad: 16px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-2: #eef0f4;
+    --text: #16181d;
+    --text-dim: #5d6472;
+    --accent: #1f5fd0;
+    --accent-text: #ffffff;
+    --danger: #b3261e;
+    --border: #dfe2e8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* display:grid/flex/block en una clase pisa el display:none implicito de
+   [hidden]. Sin esto el formulario y su boton se ven a la vez. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  /* Nada debe desbordar a lo ancho: el criterio es "sin scroll horizontal". */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Deja lugar para la barra fija de abajo mas el safe area. */
+  padding-bottom: calc(96px + var(--safe-bottom));
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) var(--pad) 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+
+.app-header__note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+/* ---------- Lista ---------- */
+
+.app-main {
+  padding: var(--pad);
+}
+
+.empty {
+  margin: 15dvh 0 0;
+  text-align: center;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+.expenses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.expense {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px 12px 14px;
+  min-height: var(--tap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.expense__emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex: none;
+}
+
+.expense__body {
+  flex: 1;
+  min-width: 0; /* deja que el texto largo se recorte en vez de estirar la fila */
+}
+
+.expense__category {
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense__date {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.expense__amount {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.expense__delete {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.expense__delete:active {
+  background: var(--surface-2);
+  color: var(--danger);
+}
+
+/* ---------- Composer ---------- */
+
+.composer {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 3;
+  padding: 12px var(--pad) calc(12px + var(--safe-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  /* Un formulario largo en un telefono chico se scrollea dentro de la barra. */
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+
+.composer__form {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 12px;
+}
+
+.composer__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.composer__actions .btn {
+  flex: 1;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label,
+.field__label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.field input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  /* 16px exactos: por debajo de eso iOS hace zoom al enfocar el input. */
+  font-size: 16px;
+}
+
+.field input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+#amount {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chips de categoria: se scrollean solas en horizontal, sin arrastrar la pagina. */
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  scroll-snap-type: x proximity;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  min-height: var(--tap);
+  padding: 8px 14px;
+  scroll-snap-align: start;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip[aria-checked='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.88rem;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn--block {
+  display: block;
+  width: 100%;
+}
+
+.btn:active {
+  filter: brightness(0.92);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .expense {
+    animation: appear 160ms ease-out;
+  }
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
