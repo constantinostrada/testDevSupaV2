@@ -30,10 +30,18 @@ What: A hidden `<input required>` silently blocks native form submission (no vis
 
 What: Tap-vs-scroll on the list is disambiguated with a `pointerdown`/`pointermove` guard: a tap only registers if the finger moved less than ~10px and no `scroll` event fired in between; the guard is applied to both the row-edit button and the delete button. · Why: without it, scrolling the expense list on mobile can accidentally fire row-open or delete actions. · Where: js/app.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-9 -->
 
-## Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruz…
+## If the app is left open across local midnight, `render()` never re-fires on its own, so t…
 
-What: Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruzando la medianoche, porque sin interacción nadie vuelve a renderizar. · Why: hace falta un timeout programado a la próxima medianoche local (calculada por componentes de fecha, no sumando 24h, para los días de cambio de horario) MÁS un re-chequeo en `visibilitychange`/`focus`: en segundo plano el navegador throttlea o suspende el timer, así que el timer solo no alcanza. · Where: js/app.js. <!-- id: 77b40e0f-231c-4ae5-ba03-71bf690b3c9c-0 -->
+What: If the app is left open across local midnight, `render()` never re-fires on its own, so the "today" total silently keeps showing yesterday's data. · Why: there's no timer driving re-render on date change by default. · Where: js/app.js render(). · Learned: schedule a timeout to the next local midnight computed from date components (not `+24h`, which breaks across DST transitions), and add a fallback recheck on `visibilitychange`/`focus` because backgrounded tabs throttle timers and the midnight timeout alone can't be trusted. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-2 -->
 
-## Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sir…
+## When manually verifying UI changes in the browser, a previously-installed service worker…
 
-What: Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sirviendo la versión anterior del archivo aunque el servidor local mandara `Cache-Control: no-store`. · Why: el sw cachea el app shell con estrategia cache-first, y el precache se llena en el `install`, es decir con el estado del archivo en ese momento; subir `CACHE_VERSION` no alcanza si se sigue editando después. · Where: sw.js · Learned: antes de medir un cambio a mano hay que desregistrar el service worker y borrar los caches (`caches.keys()` + `delete`), si no se está midiendo código viejo. Es la misma trampa que la caché HTTP, por otra vía. <!-- id: d03ba33e-675a-46c8-b12c-13bcedba95cc-0 -->
+What: When manually verifying UI changes in the browser, a previously-installed service worker can keep serving stale cached index.html/styles.css/app.js even after a reload, producing false negatives during verification. · Why: — · Where: sw.js precache. · Learned: unregister the service worker / clear its caches (or serve with Cache-Control: no-store) before trusting any DOM/style measurement taken while testing local changes. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-4 -->
+
+## The edit-expense form has no date field — editing an expense can only change its amount/c…
+
+What: The edit-expense form has no date field — editing an expense can only change its amount/category, never its date, so an edited expense always keeps the day it was originally created on. · Why: this is why editing a prior day's expense always moves the month total but never the "today" total; there's no UI path to retarget an expense's date via edit, only via delete + re-add. · Where: js/app.js expense edit form. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-10 -->
+
+## The two-total layout uses `container-type: inline-size` and `cqw` container-query units,…
+
+What: The two-total layout uses `container-type: inline-size` and `cqw` container-query units, the project's first CSS feature with a real browser-support floor (Chrome 105+ / Safari 16+). · Why: on unsupported browsers the declaration is simply invalid and the total falls back to its inherited 1rem font-size — smaller but still legible and non-overflowing, so the dependency degrades gracefully rather than breaking. · Where: styles.css .summary__totals. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-6 -->

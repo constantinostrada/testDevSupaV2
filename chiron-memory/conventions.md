@@ -54,6 +54,14 @@ What: The 'Deshacer' (undo) toast for a deleted expense is anchored visually abo
 
 What: Each expense row in the list is a full-width `<button>` that opens edit on tap; the delete (✕) control is a separate 48×48px element placed outside that row button, not nested inside it. · Why: keeps 'open edit' and 'delete' as physically distinct tap targets so one can never be accidentally triggered instead of the other. · Where: js/app.js, styles.css. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-8 -->
 
-## Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS c…
+## "Today" is defined via `todayISO()` in js/storage.js (device-local date as YYYY-MM-DD) —…
 
-What: Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS contra el ancho de la columna (`100cqw`) y el largo del más largo de los dos, que `renderSummary()` publica en la custom property `--total-chars`. · Why: un monto de millones baja de cuerpo en vez de partirse a mitad de número o desbordar la tarjeta en una pantalla de 320px, y los dos totales siguen midiendo igual aunque uno sea más corto. · Where: styles.css (.summary__total), js/app.js. <!-- id: 8fec4991-75d9-42c1-b96b-de8d5e579b79-0 -->
+What: "Today" is defined via `todayISO()` in js/storage.js (device-local date as YYYY-MM-DD) — the same date source used by `currentMonthPrefix()` for month filtering. · Why: guarantees the day and month boundaries use one consistent local-date definition instead of two independently-computed dates that could drift. · Where: js/storage.js todayISO(), js/app.js renderSummary(). <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-1 -->
+
+## All currency display in the UI goes through the single `formatAmount()` helper, reused as…
+
+What: All currency display in the UI goes through the single `formatAmount()` helper, reused as-is for both the day and month totals. · Why: keeps formatting/decimals consistent across every money value shown, per the app's existing convention of one formatter for all amounts. · Where: js/app.js. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-7 -->
+
+## When a summary section's visible `<h2>` title is replaced by multiple labeled sub-blocks,…
+
+What: When a summary section's visible `<h2>` title is replaced by multiple labeled sub-blocks, the section's accessible name moves from `aria-labelledby="summary-title"` to a direct `aria-label`, and any nested list that relied on that removed title for context (e.g. the category breakdown) needs its own explicit `aria-label` naming what it covers (the month). · Why: — · Where: index.html summary section. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-8 -->

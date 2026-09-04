@@ -18,6 +18,10 @@ What: sw.js hace precache del app shell (index.html, styles.css, js/app.js, js/s
 
 What: js/storage.js es la única puerta de acceso a los datos persistidos; js/app.js nunca toca localStorage directamente · Why: mantener la capa de persistencia aislada y testeable, y dejar el terreno listo para futuras migraciones o cambios de storage · Where: js/storage.js, js/app.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-3 -->
 
-## El total del día y el total del mes se derivan los dos del mismo `listExpenses()` dentro…
+## `renderSummary()` (js/app.js) computes both the daily and monthly totals by filtering/red…
 
-What: El total del día y el total del mes se derivan los dos del mismo `listExpenses()` dentro de `renderSummary()`, en cada render, sin agregados guardados; "hoy" se define comparando `expense.date` con `todayISO()` (fecha local del dispositivo, el mismo criterio con el que se guarda la fecha del gasto). · Why: alta, edición y baja ya pasan todas por `render()`, así que los dos totales se actualizan al instante sin ningún estado extra que pueda quedar desfasado. · Where: js/app.js. <!-- id: af8afe85-caa3-40b6-b28e-990e529f7dc8-0 -->
+What: `renderSummary()` (js/app.js) computes both the daily and monthly totals by filtering/reducing the full result of `listExpenses()` on every render, with no separate stored/cached total state. · Why: since every render already re-derives the month total from scratch, adding a same-render filter for the day total makes add/edit/delete update both totals instantly for free, with no extra state to keep in sync. · Where: js/app.js renderSummary(). <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-0 -->
+
+## Deleting an expense shows a toast with an undo ("Deshacer") action that restores the dele…
+
+What: Deleting an expense shows a toast with an undo ("Deshacer") action that restores the deleted expense if tapped, rather than requiring a confirmation step before deletion. · Why: gives users a fast recovery path after an accidental delete; confirmed by manual testing during this session (delete then undo both worked and both totals reverted correctly). · Where: js/app.js delete flow. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-9 -->
