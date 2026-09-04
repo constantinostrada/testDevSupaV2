@@ -1,6 +1,10 @@
 # decision
 
-A technical decision that was made and WHY (which alternatives were discarded).
+A choice made and the reasoning behind it — the path taken over the alternatives.
+
+## Expense deletion is a soft delete (tombstone): `deleteExpense()` sets a `deletedAt` field…
+
+What: Expense deletion is a soft delete (tombstone): `deleteExpense()` sets a `deletedAt` field on the record instead of removing it, and `listExpenses()` filters out anything with `deletedAt` set. · Why: the delete-with-5s-undo UX needs the deletion to already be persisted the instant the user taps ✕ (so it survives an app close during the undo window); `restoreExpense()` simply clears `deletedAt` again. · Where: js/storage.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-1 -->
 
 ## Se eligió HTML + CSS + JS vanilla con ES modules, sin build ni dependencias, para la app…
 
@@ -14,25 +18,6 @@ What: Los montos de gasto se guardan como enteros en centavos (amountCents), no 
 
 What: La exportación a archivo se dejó fuera de esta tarea, para 'más adelante' · Why: acordado explícitamente con el usuario como fuera de alcance; el campo schemaVersion en el storage deja el terreno preparado para implementarla sin romper datos existentes · Where: js/storage.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-2 -->
 
-## Borrar un gasto es baja logica con `deletedAt`, no borrado fisico
+## The monthly summary feature did not exist before this work order; it was added with delib…
 
-**What** · `deleteExpense(id)` marca el gasto con `deletedAt` y lo deja fuera
-de `listExpenses()`; `restoreExpense(id)` quita la marca. El registro nunca se
-saca del array. Se descarto el borrado fisico con el gasto sostenido en
-memoria durante la ventana de deshacer.
-**Why** · Con el gasto en memoria, cerrar la app durante esos segundos lo
-resucitaba o lo perdia segun el orden de las escrituras. Con la marca
-persistida desde el primer momento, el estado en disco siempre es el que se
-ve en pantalla, y "deshacer" es una escritura mas, no una excepcion.
-**Where** · `js/storage.js` (`deleteExpense`, `restoreExpense`, `isActive`).
-**Learned** · 2026-09-04.
-
-## La ventana de deshacer dura 5 s y solo hay una viva a la vez
-
-**What** · Borrar muestra un toast con "Deshacer" durante 5 s. Un borrado
-nuevo cierra el toast anterior, dejando esa baja firme. No hay `confirm()`.
-**Why** · Un modal del navegador corta el flujo en mobile. Y sostener varias
-ventanas abiertas obligaria a una cola de deshacer que nadie pidio: la unica
-recuperacion que importa es la del error recien cometido.
-**Where** · `js/app.js` (`UNDO_MS`, `removeWithUndo`, `hideUndo`).
-**Learned** · 2026-09-04.
+What: The monthly summary feature did not exist before this work order; it was added with deliberately minimal scope — only the current calendar month, no navigation between months. · Why: 6 of the 11 acceptance criteria for edit/delete could only be verified by observing month/category totals, so the summary had to be built as an enabler; scope was kept minimal (current month only) rather than building full month navigation. · Where: js/app.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-13 -->

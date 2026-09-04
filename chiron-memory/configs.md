@@ -1,24 +1,11 @@
 # config
 
-Configuration knowledge: env vars, dependencies, build/deploy, where data lives.
+Setup and configuration — env vars, flags, how to run the project.
 
-## Los gastos viven en localStorage bajo `gastos.v1`, con schemaVersion
+## El service worker (sw.js) exige HTTPS para funcionar; localhost está exceptuado pero abri…
 
-**What** · Única clave de persistencia: `gastos.v1`, con la forma
-`{ schemaVersion: 1, expenses: [{ id, amountCents, categoryId, date, createdAt }] }`.
-`date` es `YYYY-MM-DD` en horario local. No hay backend ni sincronización.
-**Why** · El `schemaVersion` explícito deja lugar para la exportación a archivo
-(pedida como trabajo futuro) y para migraciones, sin tener que adivinar el
-formato de datos ya guardados en el teléfono del usuario.
-**Where** · `js/storage.js` (`STORAGE_KEY`, `SCHEMA_VERSION`).
-**Learned** · 2026-08-31.
+What: El service worker (sw.js) exige HTTPS para funcionar; localhost está exceptuado pero abrir la app desde el celular contra una IP de LAN por HTTP plano no lo está — en ese caso la app funciona pero sin caché offline · Why: — · Where: README.md, sw.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-10 -->
 
-## El service worker exige subir CACHE_VERSION al tocar cualquier archivo
+## `sw.js`'s `CACHE_VERSION` constant must be bumped (e.g
 
-**What** · `sw.js` precachea el app shell bajo el nombre de caché
-`gastos-v1`. Si se edita un archivo de `PRECACHE` sin subir `CACHE_VERSION`,
-los dispositivos siguen sirviendo la versión vieja indefinidamente.
-**Why** · La estrategia de assets es cache-first, que es lo que hace que la app
-abra instantánea y sin conexión; el precio es que el cache no se invalida solo.
-**Where** · `sw.js`.
-**Learned** · 2026-08-31.
+What: `sw.js`'s `CACHE_VERSION` constant must be bumped (e.g. `gastos-v1` → `gastos-v2`) whenever cached app-shell files (index.html, styles.css, js/*.js) change. · Why: the service worker serves cache-first, so devices keep running stale JS/HTML after a deploy if the version string isn't bumped. · Where: sw.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-12 -->
