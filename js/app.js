@@ -1,6 +1,6 @@
 /**
  * UI sobre la capa de storage: alta, correccion y baja de gastos, lista de lo
- * cargado y resumen del mes en curso.
+ * cargado y resumen del dia de hoy y del mes en curso.
  *
  * El resumen y la lista se derivan de listExpenses() en cada render. No hay
  * totales guardados aparte: corregir o borrar un gasto no puede dejar el
@@ -25,6 +25,8 @@ const el = {
   notice: document.getElementById('notice'),
   emptyState: document.getElementById('empty-state'),
   list: document.getElementById('expense-list'),
+  summaryTotals: document.querySelector('.summary__totals'),
+  summaryToday: document.getElementById('summary-today'),
   summaryTotal: document.getElementById('summary-total'),
   summaryCategories: document.getElementById('summary-categories'),
   composer: document.getElementById('composer'),
@@ -121,12 +123,28 @@ function revealSelectedChip() {
   el.chips.scrollLeft = Math.max(0, el.chips.scrollLeft + delta);
 }
 
+function sumCents(expenses) {
+  return expenses.reduce((sum, e) => sum + e.amountCents, 0);
+}
+
 function renderSummary(expenses) {
   const prefix = currentMonthPrefix();
   const ofMonth = expenses.filter((e) => e.date.startsWith(prefix));
 
-  const total = ofMonth.reduce((sum, e) => sum + e.amountCents, 0);
-  el.summaryTotal.textContent = formatAmount(total);
+  // "Hoy" es la fecha local del dispositivo, el mismo criterio con el que se
+  // guarda expense.date. Sin gastos el total queda en cero, no se oculta.
+  const today = todayISO();
+  const todayText = formatAmount(sumCents(expenses.filter((e) => e.date === today)));
+  const monthText = formatAmount(sumCents(ofMonth));
+  el.summaryToday.textContent = todayText;
+  el.summaryTotal.textContent = monthText;
+
+  // El CSS ajusta el cuerpo de los dos totales al largo del mas largo, para que
+  // un monto de millones entre en la columna sin partirse ni desbordar.
+  el.summaryTotals.style.setProperty(
+    '--total-chars',
+    String(Math.max(todayText.length, monthText.length))
+  );
 
   // Solo las categorias con gasto: una lista de ceros no le dice nada a nadie.
   const byCategory = new Map();
@@ -207,9 +225,45 @@ function renderList(expenses) {
   );
 }
 
+/* ---------- Cambio de dia ---------- */
+
+/**
+ * Dia local que refleja lo pintado. Con la app abierta cruzando la medianoche,
+ * el total de "Hoy" pasaria a ser el de ayer si nadie vuelve a renderizar.
+ */
+let renderedDay = null;
+let dayTimer = null;
+
+/** Re-render al primer segundo del dia siguiente, para que se ajuste solo. */
+function scheduleDayRollover() {
+  clearTimeout(dayTimer);
+  const now = new Date();
+  // Por componentes locales y no sumando 24h: asi cae bien tambien en los dias
+  // de cambio de horario, que no tienen 24 horas exactas.
+  const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+  dayTimer = setTimeout(render, nextDay - now);
+}
+
+/**
+ * Red de contencion del timer: en segundo plano el navegador lo throttlea o lo
+ * suspende, asi que al volver a la app se vuelve a chequear el dia a mano.
+ */
+function renderIfDayChanged() {
+  if (renderedDay !== null && renderedDay !== todayISO()) render();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) renderIfDayChanged();
+});
+window.addEventListener('focus', renderIfDayChanged);
+
+/* ---------- Render ---------- */
+
 /** Unico punto de re-pintado: lista y resumen salen siempre del mismo dato. */
 function render() {
   const expenses = listExpenses();
+  renderedDay = todayISO();
+  scheduleDayRollover();
   renderSummary(expenses);
   renderList(expenses);
 }

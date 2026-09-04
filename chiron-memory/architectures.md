@@ -17,3 +17,7 @@ What: sw.js hace precache del app shell (index.html, styles.css, js/app.js, js/s
 ## js/storage.js es la única puerta de acceso a los datos persistidos; js/app.js nunca toca…
 
 What: js/storage.js es la única puerta de acceso a los datos persistidos; js/app.js nunca toca localStorage directamente · Why: mantener la capa de persistencia aislada y testeable, y dejar el terreno listo para futuras migraciones o cambios de storage · Where: js/storage.js, js/app.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-3 -->
+
+## El total del día y el total del mes se derivan los dos del mismo `listExpenses()` dentro…
+
+What: El total del día y el total del mes se derivan los dos del mismo `listExpenses()` dentro de `renderSummary()`, en cada render, sin agregados guardados; "hoy" se define comparando `expense.date` con `todayISO()` (fecha local del dispositivo, el mismo criterio con el que se guarda la fecha del gasto). · Why: alta, edición y baja ya pasan todas por `render()`, así que los dos totales se actualizan al instante sin ningún estado extra que pueda quedar desfasado. · Where: js/app.js. <!-- id: af8afe85-caa3-40b6-b28e-990e529f7dc8-0 -->

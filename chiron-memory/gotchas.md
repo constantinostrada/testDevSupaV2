@@ -29,3 +29,11 @@ What: A hidden `<input required>` silently blocks native form submission (no vis
 ## Tap-vs-scroll on the list is disambiguated with a `pointerdown`/`pointermove` guard: a ta…
 
 What: Tap-vs-scroll on the list is disambiguated with a `pointerdown`/`pointermove` guard: a tap only registers if the finger moved less than ~10px and no `scroll` event fired in between; the guard is applied to both the row-edit button and the delete button. · Why: without it, scrolling the expense list on mobile can accidentally fire row-open or delete actions. · Where: js/app.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-9 -->
+
+## Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruz…
+
+What: Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruzando la medianoche, porque sin interacción nadie vuelve a renderizar. · Why: hace falta un timeout programado a la próxima medianoche local (calculada por componentes de fecha, no sumando 24h, para los días de cambio de horario) MÁS un re-chequeo en `visibilitychange`/`focus`: en segundo plano el navegador throttlea o suspende el timer, así que el timer solo no alcanza. · Where: js/app.js. <!-- id: 77b40e0f-231c-4ae5-ba03-71bf690b3c9c-0 -->
+
+## Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sir…
+
+What: Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sirviendo la versión anterior del archivo aunque el servidor local mandara `Cache-Control: no-store`. · Why: el sw cachea el app shell con estrategia cache-first, y el precache se llena en el `install`, es decir con el estado del archivo en ese momento; subir `CACHE_VERSION` no alcanza si se sigue editando después. · Where: sw.js · Learned: antes de medir un cambio a mano hay que desregistrar el service worker y borrar los caches (`caches.keys()` + `delete`), si no se está midiendo código viejo. Es la misma trampa que la caché HTTP, por otra vía. <!-- id: d03ba33e-675a-46c8-b12c-13bcedba95cc-0 -->

@@ -96,7 +96,24 @@ body {
   border-radius: var(--radius);
 }
 
-.summary__title {
+/* Los dos totales lado a lado. auto-fit con un minimo chico: en un movil
+   angosto siguen entrando en una fila, y si no entran se apilan en vez de
+   recortarse. */
+.summary__totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 4px 12px;
+}
+
+/* min-width: 0 para que la columna pueda encogerse; sin esto el contenido
+   marca el ancho minimo y la grilla desborda la tarjeta. container-type deja
+   medir el tamaño de letra contra el ancho de la columna, no de la pantalla. */
+.summary__block {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.summary__label {
   margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
@@ -105,12 +122,24 @@ body {
   color: var(--text-dim);
 }
 
+/*
+ * Mismo tratamiento para los dos totales: el tamaño lo fija --total-chars, que
+ * es el largo del mas largo de los dos, asi los dos miden igual aunque uno sea
+ * mas corto.
+ *
+ * El calculo es "cuanta letra entra en la columna": 0,62em por caracter es el
+ * ancho de un digito tabular con algo de aire. Un monto de millones baja de
+ * cuerpo en vez de partirse a mitad de numero. Debajo del piso de 1rem preferimos
+ * que corte por el espacio ("$" en una linea, el numero entero en la otra);
+ * overflow-wrap es la ultima red para un monto absurdo, que nunca desborde.
+ */
 .summary__total {
   margin: 2px 0 0;
-  font-size: 1.9rem;
+  font-size: clamp(1rem, calc(100cqw / (var(--total-chars, 10) * 0.62)), 1.5rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .summary__categories {

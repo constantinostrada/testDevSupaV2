@@ -53,3 +53,7 @@ What: The 'Deshacer' (undo) toast for a deleted expense is anchored visually abo
 ## Each expense row in the list is a full-width `<button>` that opens edit on tap; the delet…
 
 What: Each expense row in the list is a full-width `<button>` that opens edit on tap; the delete (✕) control is a separate 48×48px element placed outside that row button, not nested inside it. · Why: keeps 'open edit' and 'delete' as physically distinct tap targets so one can never be accidentally triggered instead of the other. · Where: js/app.js, styles.css. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-8 -->
+
+## Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS c…
+
+What: Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS contra el ancho de la columna (`100cqw`) y el largo del más largo de los dos, que `renderSummary()` publica en la custom property `--total-chars`. · Why: un monto de millones baja de cuerpo en vez de partirse a mitad de número o desbordar la tarjeta en una pantalla de 320px, y los dos totales siguen midiendo igual aunque uno sea más corto. · Where: styles.css (.summary__total), js/app.js. <!-- id: 8fec4991-75d9-42c1-b96b-de8d5e579b79-0 -->

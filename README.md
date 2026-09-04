@@ -27,7 +27,7 @@ Para publicarla, subir el directorio tal cual a cualquier hosting estático.
 | `index.html` | Marcado del app shell |
 | `styles.css` | Layout mobile-first, una sola columna |
 | `js/storage.js` | Modelo de gasto, categorías por defecto y persistencia en `localStorage` |
-| `js/app.js` | Resumen del mes, render de la lista, alta/edición/baja de gastos |
+| `js/app.js` | Totales de hoy y del mes, render de la lista, alta/edición/baja de gastos |
 | `sw.js` | Caché del app shell para que abra sin conexión |
 | `manifest.webmanifest` | Nombre, colores e ícono |
 
