@@ -33,3 +33,25 @@ What: Las categorías por defecto (comida, transporte, super, salidas, servicios
 ## La lectura de storage es defensiva: si el JSON está corrupto o el storage no está disponi…
 
 What: La lectura de storage es defensiva: si el JSON está corrupto o el storage no está disponible, la app cae a estado vacío + aviso, nunca a pantalla en blanco · Why: — · Where: js/storage.js <!-- id: 83afad12-5141-4760-a11c-9e88082688d0-6 -->
+
+## Un toque en la lista solo cuenta si el dedo casi no se movio
+
+**What** · La lista lleva un guard de gesto: `pointerdown` guarda la posicion,
+un `pointermove` de mas de 10 px (o un `scroll`, o un `pointercancel`) lo
+cancela, y el handler de `click` consume ese estado antes de actuar. Vale
+tanto para abrir la edicion como para el boton de borrar. Un `click` sin
+`pointerdown` previo (teclado) pasa siempre.
+**Why** · La fila entera es un boton: sin el guard, un scroll que arranca
+sobre una fila puede terminar abriendo la edicion o borrando el gasto.
+**Where** · `js/app.js` (`TAP_SLOP_PX`, `consumeTap`).
+**Learned** · 2026-09-04.
+
+## Editar reusa el composer de alta, en modo correccion
+
+**What** · No hay pantalla ni formulario aparte para editar: `openForm(gasto)`
+pone el mismo composer en modo correccion (titulo, boton, monto precargado,
+campo Fecha oculto y sin `required`). `editingId` distingue alta de edicion.
+**Why** · Garantiza que la correccion valide con exactamente las mismas
+reglas y los mismos mensajes que la carga original, porque es el mismo codigo.
+**Where** · `js/app.js` (`openForm`, `editingId`), `index.html`.
+**Learned** · 2026-09-04.

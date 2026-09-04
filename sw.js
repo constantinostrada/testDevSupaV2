@@ -8,7 +8,7 @@
  * los dispositivos siguen sirviendo la version vieja desde el cache.
  */
 
-const CACHE_VERSION = 'gastos-v1';
+const CACHE_VERSION = 'gastos-v2';
 
 const PRECACHE = [
   './',

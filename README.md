@@ -27,14 +27,19 @@ Para publicarla, subir el directorio tal cual a cualquier hosting estático.
 | `index.html` | Marcado del app shell |
 | `styles.css` | Layout mobile-first, una sola columna |
 | `js/storage.js` | Modelo de gasto, categorías por defecto y persistencia en `localStorage` |
-| `js/app.js` | Render de la lista y alta de gastos |
+| `js/app.js` | Resumen del mes, render de la lista, alta/edición/baja de gastos |
 | `sw.js` | Caché del app shell para que abra sin conexión |
 | `manifest.webmanifest` | Nombre, colores e ícono |
 
 ## Dónde viven los datos
 
-En `localStorage` del navegador, bajo la clave `gastos.v1`. No salen del
+En `localStorage` del navegador, bajo la clave `gastos.v1` (formato `schemaVersion: 2`). No salen del
 dispositivo y no hay copia en ningún servidor: **borrar los datos de navegación,
 cambiar de navegador o perder el teléfono es perder el historial.** El formato
 guardado lleva un `schemaVersion` para que una exportación a archivo y futuras
 migraciones se puedan agregar sin romper lo ya cargado.
+
+Borrar un gasto es una **baja lógica**: el gasto queda guardado con un campo
+`deletedAt` y sale de la lista y de los totales. Eso es lo que permite ofrecer
+"deshacer" durante unos segundos sin sostener nada en memoria, y que la baja
+sobreviva a cerrar la app aunque la ventana de deshacer siguiera abierta.

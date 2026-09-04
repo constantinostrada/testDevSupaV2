@@ -88,6 +88,69 @@ body {
   padding: var(--pad);
 }
 
+.summary {
+  margin: 0 0 var(--pad);
+  padding: 14px var(--pad);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.summary__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.summary__total {
+  margin: 2px 0 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.summary__categories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+/* Sin categorias con gasto el resumen no deja un hueco flotando. */
+.summary__categories:not(:empty) {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.summary__category {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.summary__category-amount {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.notice {
+  margin: 0 0 var(--pad);
+  padding: 10px 12px;
+  color: var(--danger);
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
 .empty {
   margin: 15dvh 0 0;
   text-align: center;
@@ -106,12 +169,42 @@ body {
 .expense {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 8px 12px 14px;
+  padding: 0 8px 0 0;
   min-height: var(--tap);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+/* El cuerpo de la fila es el boton de editar: ocupa todo lo que no ocupa el
+   boton de borrar, asi el pulgar da con la edicion sin apuntar. */
+.expense__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px 12px 14px;
+  min-height: var(--tap);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+  cursor: pointer;
+  /* Deja pasar el scroll vertical y saca el retardo del doble-tap-zoom. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.expense__open:active {
+  background: var(--surface-2);
+}
+
+.expense__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .expense__emoji {
@@ -157,6 +250,13 @@ body {
   border: 0;
   border-radius: 50%;
   cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.expense__delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .expense__delete:active {
@@ -183,6 +283,47 @@ body {
   display: grid;
   gap: 14px;
   margin: 0 0 12px;
+}
+
+.composer__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Vive dentro de la barra inferior: queda siempre sobre el boton principal,
+   en la zona del pulgar, sin tener que calcular la altura del formulario. */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 8px 8px 8px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.toast__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.toast__action {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 14px;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toast__action:active {
+  background: var(--surface);
 }
 
 .composer__actions {

@@ -23,6 +23,16 @@
     </header>
 
     <main class="app-main" id="main">
+      <!-- El resumen se recalcula desde la lista en cada render: no hay total
+           guardado que pueda quedar desfasado de los gastos. -->
+      <section class="summary" id="summary" aria-labelledby="summary-title">
+        <h2 class="summary__title" id="summary-title">Este mes</h2>
+        <p class="summary__total" id="summary-total">$ 0,00</p>
+        <ul class="summary__categories" id="summary-categories"></ul>
+      </section>
+
+      <p class="notice" id="notice" role="alert" hidden></p>
+
       <p class="empty" id="empty-state">
         Todavía no cargaste gastos.<br />Tocá <strong>Nuevo gasto</strong> para empezar.
       </p>
@@ -32,7 +42,14 @@
     <!-- Barra fija al alcance del pulgar. El formulario se despliega desde
          abajo para que los controles queden en la mitad inferior. -->
     <div class="composer" id="composer">
+      <div class="toast" id="undo-toast" role="status" hidden>
+        <span class="toast__text">Gasto eliminado</span>
+        <button type="button" class="toast__action" id="undo-btn">Deshacer</button>
+      </div>
+
       <form class="composer__form" id="expense-form" hidden>
+        <h2 class="composer__title" id="form-title">Nuevo gasto</h2>
+
         <div class="field">
           <label for="amount">Monto</label>
           <!-- inputmode=decimal abre el teclado numerico; font-size 16px en el
@@ -54,7 +71,7 @@
           <div class="chips" role="radiogroup" aria-labelledby="category-label" id="category-chips"></div>
         </div>
 
-        <div class="field">
+        <div class="field" id="date-field">
           <label for="date">Fecha</label>
           <input id="date" name="date" type="date" required />
         </div>
@@ -63,7 +80,7 @@
 
         <div class="composer__actions">
           <button type="button" class="btn btn--ghost" id="cancel-btn">Cancelar</button>
-          <button type="submit" class="btn btn--primary">Guardar</button>
+          <button type="submit" class="btn btn--primary" id="submit-btn">Guardar</button>
         </div>
       </form>
 

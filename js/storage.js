@@ -8,10 +8,21 @@
  * Los montos se guardan como enteros en centavos para que sumarlos no arrastre
  * error de punto flotante. La UI nunca deberia manipular centavos a mano:
  * usar parseAmount() al entrar y formatAmount() al salir.
+ *
+ * Borrar es una baja logica: el gasto queda guardado con deletedAt puesto y
+ * listExpenses() lo deja afuera. Es lo que permite ofrecer "deshacer" sin
+ * tener que sostener el gasto borrado en memoria, y que la baja sobreviva a
+ * cerrar la app aunque la ventana de deshacer siga abierta.
  */
 
 const STORAGE_KEY = 'gastos.v1';
-const SCHEMA_VERSION = 1;
+
+/**
+ * v2 agrega el campo opcional deletedAt al gasto. Es aditivo: un store v1 ya
+ * es un store v2 valido (sin deletedAt = gasto activo), asi que no hay
+ * transformacion que correr al leer, solo el numero nuevo al escribir.
+ */
+const SCHEMA_VERSION = 2;
 
 /**
  * Categorias disponibles desde el primer arranque. Viven en codigo, no en
@@ -96,8 +107,14 @@ function isValidExpense(e) {
     Number.isInteger(e.amountCents) &&
     e.amountCents > 0 &&
     typeof e.categoryId === 'string' &&
-    isISODate(e.date)
+    isISODate(e.date) &&
+    (e.deletedAt == null || typeof e.deletedAt === 'string')
   );
+}
+
+/** true si el gasto sigue vigente (no fue dado de baja). */
+function isActive(e) {
+  return e.deletedAt == null;
 }
 
 export function isISODate(value) {
@@ -152,9 +169,9 @@ function newId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Gastos ordenados del mas reciente al mas viejo. */
+/** Gastos vigentes, ordenados del mas reciente al mas viejo. */
 export function listExpenses() {
-  return readStore().expenses.sort((a, b) => {
+  return readStore().expenses.filter(isActive).sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? 1 : -1;
     return (b.createdAt || '').localeCompare(a.createdAt || '');
   });
@@ -176,6 +193,7 @@ export function addExpense({ amount, categoryId, date }) {
     categoryId,
     date,
     createdAt: new Date().toISOString(),
+    deletedAt: null,
   };
 
   const store = readStore();
@@ -188,15 +206,54 @@ export function addExpense({ amount, categoryId, date }) {
   return expense;
 }
 
-export function removeExpense(id) {
+/**
+ * Aplica un cambio a un gasto y lo persiste, o no cambia nada.
+ *
+ * mutate() trabaja sobre una copia; el store solo se toca si la escritura
+ * sale bien. Si el navegador la rechaza no queda estado intermedio: en disco
+ * sigue la version anterior y aca no hay copia en memoria que revertir,
+ * porque cada operacion vuelve a leer el store desde cero.
+ */
+function patchExpense(id, mutate) {
   const store = readStore();
-  const remaining = store.expenses.filter((e) => e.id !== id);
-  if (remaining.length === store.expenses.length) return false;
-  store.expenses = remaining;
+  const current = store.expenses.find((e) => e.id === id);
+  if (!current) return null;
+
+  const updated = { ...current, ...mutate(current) };
+  store.expenses = store.expenses.map((e) => (e.id === id ? updated : e));
   try {
     writeStore(store);
   } catch {
     throw new Error('No se pudo guardar en este navegador.');
   }
-  return true;
+  return updated;
+}
+
+/**
+ * Corrige monto y categoria de un gasto ya cargado. El resto de los datos
+ * (fecha, id, createdAt) no se toca.
+ *
+ * Valida con las mismas reglas y los mismos mensajes que el alta: es el mismo
+ * parseAmount() y el mismo conjunto de categorias, para que un monto que no
+ * se acepta al cargar tampoco se acepte al corregir.
+ */
+export function updateExpense(id, { amount, categoryId }) {
+  const amountCents = parseAmount(amount);
+  if (amountCents === null) throw new Error('Ingresá un monto mayor a cero.');
+  if (!CATEGORIES_BY_ID.has(categoryId)) throw new Error('Elegí una categoría.');
+
+  return patchExpense(id, () => ({ amountCents, categoryId }));
+}
+
+/**
+ * Da de baja un gasto. Baja logica: queda guardado con deletedAt, fuera de la
+ * lista y de los totales, y restoreExpense() puede volver a traerlo tal cual.
+ */
+export function deleteExpense(id) {
+  return patchExpense(id, () => ({ deletedAt: new Date().toISOString() }));
+}
+
+/** Deshace una baja: el gasto vuelve con exactamente los mismos datos. */
+export function restoreExpense(id) {
+  return patchExpense(id, () => ({ deletedAt: null }));
 }
