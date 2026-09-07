@@ -45,3 +45,7 @@ What: The edit-expense form has no date field — editing an expense can only ch
 ## The two-total layout uses `container-type: inline-size` and `cqw` container-query units,…
 
 What: The two-total layout uses `container-type: inline-size` and `cqw` container-query units, the project's first CSS feature with a real browser-support floor (Chrome 105+ / Safari 16+). · Why: on unsupported browsers the declaration is simply invalid and the total falls back to its inherited 1rem font-size — smaller but still legible and non-overflowing, so the dependency degrades gracefully rather than breaking. · Where: styles.css .summary__totals. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-6 -->
+
+## La ventana de Chrome controlada por la extensión no baja de ~780px de ancho: `resize_window` a 390px no emula un teléfono
+
+What: Al verificar con las herramientas de Chrome, `resize_window` a 390×844 devolvió éxito pero `window.innerWidth` siguió en ~1887px; la app no se puede probar en viewport de teléfono por ese camino. · Why: — · Where: verificación manual en navegador. · Learned: verificar la lógica por JS en la página (totales vs. store, deltas de alta/edición/baja, fin de mes falseando `Date` y disparando `focus`) y dejar la revisión visual móvil para un dispositivo real o DevTools.

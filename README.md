@@ -27,9 +27,26 @@ Para publicarla, subir el directorio tal cual a cualquier hosting estático.
 | `index.html` | Marcado del app shell |
 | `styles.css` | Layout mobile-first, una sola columna |
 | `js/storage.js` | Modelo de gasto, categorías por defecto y persistencia en `localStorage` |
-| `js/app.js` | Totales de hoy y del mes, render de la lista, alta/edición/baja de gastos |
+| `js/app.js` | Navegación Gastos / Resumen, totales de hoy y del mes, resumen del mes por categoría, render de la lista, alta/edición/baja de gastos |
 | `sw.js` | Caché del app shell para que abra sin conexión |
 | `manifest.webmanifest` | Nombre, colores e ícono |
+
+## Vistas
+
+Dos pestañas en el header, navegadas por hash (`#gastos`, `#resumen`) para que
+el botón atrás del celular y una recarga respeten la vista:
+
+- **Gastos**: totales de hoy y del mes en curso, y la lista cronológica completa.
+- **Resumen**: solo el mes calendario en curso (nombrado en pantalla): total del
+  mes como dato principal, barra apilada y ranking por categoría con monto y
+  porcentaje, de mayor a menor. Sin gastos en el mes muestra un estado vacío con
+  el botón para registrar el primero. Los gastos de meses anteriores no entran
+  en el cálculo pero siguen en la lista. Los gastos sin categoría válida se
+  agrupan como "Sin categoría", nunca se pierden del total.
+
+Todo se recalcula desde la lista en cada render: no hay un total guardado que
+pueda quedar desfasado, y al cruzar la medianoche (o el fin de mes) la app se
+vuelve a pintar sola.
 
 ## Dónde viven los datos
 

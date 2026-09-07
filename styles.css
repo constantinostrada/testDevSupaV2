@@ -15,6 +15,19 @@
   --tap: 48px;
   --pad: 16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Colores del resumen, uno fijo por categoria (el color sigue a la categoria,
+     no al puesto en el ranking). Pasos para fondo oscuro, validados en pares
+     adyacentes para daltonismo. "Sin categoria" es gris a proposito: no es una
+     categoria, es la falta de una. */
+  --cat-comida: #3987e5;
+  --cat-transporte: #d95926;
+  --cat-super: #199e70;
+  --cat-salidas: #c98500;
+  --cat-servicios: #d55181;
+  --cat-otros: #9085e9;
+  --cat-sin-categoria: #7d8494;
+  --cat-fallback: #7d8494;
 }
 
 @media (prefers-color-scheme: light) {
@@ -28,6 +41,16 @@
     --accent-text: #ffffff;
     --danger: #b3261e;
     --border: #dfe2e8;
+
+    /* Mismos tonos, pasos para fondo claro. */
+    --cat-comida: #2a78d6;
+    --cat-transporte: #eb6834;
+    --cat-super: #1baf7a;
+    --cat-salidas: #eda100;
+    --cat-servicios: #e87ba4;
+    --cat-otros: #4a3aa7;
+    --cat-sin-categoria: #8a8f9c;
+    --cat-fallback: #8a8f9c;
   }
 }
 
@@ -80,6 +103,37 @@ body {
   margin: 8px 0 0;
   font-size: 0.85rem;
   color: var(--danger);
+}
+
+/* Pestañas de navegacion: dos mitades iguales, target de 44px, la activa se
+   marca con color y subrayado (no solo color). */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 10px 0 -12px;
+}
+
+.tab {
+  display: block;
+  min-height: 44px;
+  padding: 10px 0;
+  text-align: center;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab[aria-current='page'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
 }
 
 /* ---------- Lista ---------- */
@@ -142,32 +196,157 @@ body {
   overflow-wrap: anywhere;
 }
 
-.summary__categories {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* ---------- Resumen del mes ---------- */
+
+.report__period {
+  margin: 0 0 12px;
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
-/* Sin categorias con gasto el resumen no deja un hueco flotando. */
-.summary__categories:not(:empty) {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-
-.summary__category {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.9rem;
+.report__eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--text-dim);
 }
 
-.summary__category-amount {
+.report__month {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* El total es el dato de la pantalla: cuerpo grande medido contra el ancho de
+   la tarjeta y el largo del monto (--total-chars), como en los totales de la
+   lista, para que un monto de millones baje de tamaño en vez de partirse. */
+.report__hero {
+  margin: 0 0 var(--pad);
+  padding: 16px var(--pad) 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  container-type: inline-size;
+}
+
+.report__total {
+  margin: 0;
+  font-size: clamp(1.6rem, calc(100cqw / (var(--total-chars, 10) * 0.62)), 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.report__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.report__empty {
+  margin: 8dvh 0 0;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.report__empty p {
+  margin: 0;
+}
+
+.report__breakdown {
+  padding: 14px var(--pad) 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Barra apilada al 100%: una franja por categoria, con un hueco de 2px del
+   color de la tarjeta entre franjas para que dos tonos vecinos se separen sin
+   dibujar bordes. */
+.report__bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.report__segment {
+  flex: 0 1 0;
+  min-width: 3px; /* una categoria minima sigue apareciendo */
+}
+
+.report__rows {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+/* Fila: nombre · porcentaje · monto, y debajo la barra proporcional al mayor.
+   Los numeros van en color de texto; el color de la categoria lo llevan el
+   punto junto al nombre y la barra. */
+.report__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.report__row:first-child {
+  border-top: 0;
+}
+
+.report__name {
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report__name::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--c, var(--cat-fallback));
+  vertical-align: 0;
+}
+
+.report__pct {
+  font-size: 0.9rem;
+  color: var(--text-dim);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+}
+
+.report__amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.report__track {
+  grid-column: 1 / -1;
+  display: block;
+  height: 6px;
+  margin-top: 2px;
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+
+.report__fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--c, var(--cat-fallback));
 }
 
 .notice {

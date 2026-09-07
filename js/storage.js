@@ -40,15 +40,25 @@ export const DEFAULT_CATEGORIES = [
 
 const CATEGORIES_BY_ID = new Map(DEFAULT_CATEGORIES.map((c) => [c.id, c]));
 
-/** Categoria mostrada cuando un gasto guardado apunta a un id desconocido. */
-const UNKNOWN_CATEGORY = { id: 'otros', label: 'Otros', emoji: '📦' };
+/**
+ * Bucket para gastos sin categoria: sin categoryId, o con un id que ya no
+ * existe. No se disfraza de "Otros" para que el usuario vea que hay gastos sin
+ * clasificar; su id no colisiona con ninguna categoria real ni se puede elegir
+ * en el formulario, asi que al editar uno hay que asignarle categoria.
+ */
+export const UNCATEGORIZED = Object.freeze({
+  id: 'sin-categoria',
+  label: 'Sin categoría',
+  emoji: '❔',
+});
 
 export function getCategories() {
   return DEFAULT_CATEGORIES.slice();
 }
 
+/** Categoria de un gasto para mostrar; UNCATEGORIZED si no tiene una valida. */
 export function getCategory(id) {
-  return CATEGORIES_BY_ID.get(id) || UNKNOWN_CATEGORY;
+  return CATEGORIES_BY_ID.get(id) || UNCATEGORIZED;
 }
 
 /** true si localStorage esta disponible y se puede escribir en el. */
@@ -106,7 +116,9 @@ function isValidExpense(e) {
     typeof e.id === 'string' &&
     Number.isInteger(e.amountCents) &&
     e.amountCents > 0 &&
-    typeof e.categoryId === 'string' &&
+    // Sin categoria es un gasto valido: se muestra como UNCATEGORIZED en vez
+    // de desaparecer de la lista y de los totales.
+    (e.categoryId == null || typeof e.categoryId === 'string') &&
     isISODate(e.date) &&
     (e.deletedAt == null || typeof e.deletedAt === 'string')
   );

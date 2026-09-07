@@ -20,36 +20,69 @@
       <p class="app-header__note" id="storage-note" hidden>
         Este navegador no permite guardar datos: lo que cargues se pierde al cerrar.
       </p>
+      <!-- Navegacion principal por hash (#gastos / #resumen): el boton atras del
+           celular vuelve a la vista anterior y una recarga conserva la vista.
+           Los ids de las secciones no coinciden con los hashes a proposito, para
+           que el navegador no intente scrollear hasta ellas. -->
+      <nav class="tabs" aria-label="Secciones">
+        <a class="tab" id="tab-gastos" href="#gastos" aria-current="page">Gastos</a>
+        <a class="tab" id="tab-resumen" href="#resumen">Resumen</a>
+      </nav>
     </header>
 
     <main class="app-main" id="main">
-      <!-- Los dos totales se recalculan desde la lista en cada render: no hay
-           total guardado que pueda quedar desfasado de los gastos. -->
-      <section class="summary" id="summary" aria-label="Totales gastados">
-        <div class="summary__totals">
-          <div class="summary__block">
-            <h2 class="summary__label">Hoy</h2>
-            <p class="summary__total" id="summary-today">$ 0,00</p>
-          </div>
-          <div class="summary__block">
-            <h2 class="summary__label">Este mes</h2>
-            <p class="summary__total" id="summary-total">$ 0,00</p>
-          </div>
-        </div>
-        <!-- El desglose es del mes: sin el titulo de seccion, lo dice el aria-label. -->
-        <ul
-          class="summary__categories"
-          id="summary-categories"
-          aria-label="Gastos del mes por categoría"
-        ></ul>
-      </section>
-
       <p class="notice" id="notice" role="alert" hidden></p>
 
-      <p class="empty" id="empty-state">
-        Todavía no cargaste gastos.<br />Tocá <strong>Nuevo gasto</strong> para empezar.
-      </p>
-      <ul class="expenses" id="expense-list" aria-label="Gastos cargados"></ul>
+      <section class="view" id="view-gastos" aria-labelledby="tab-gastos">
+        <!-- Los dos totales se recalculan desde la lista en cada render: no hay
+             total guardado que pueda quedar desfasado de los gastos. -->
+        <section class="summary" id="summary" aria-label="Totales gastados">
+          <div class="summary__totals">
+            <div class="summary__block">
+              <h2 class="summary__label">Hoy</h2>
+              <p class="summary__total" id="summary-today">$ 0,00</p>
+            </div>
+            <div class="summary__block">
+              <h2 class="summary__label">Este mes</h2>
+              <p class="summary__total" id="summary-total">$ 0,00</p>
+            </div>
+          </div>
+        </section>
+
+        <p class="empty" id="empty-state">
+          Todavía no cargaste gastos.<br />Tocá <strong>Nuevo gasto</strong> para empezar.
+        </p>
+        <ul class="expenses" id="expense-list" aria-label="Gastos cargados"></ul>
+      </section>
+
+      <!-- Resumen del periodo en curso (mes calendario local). Se deriva de la
+           misma lista que la vista Gastos en el mismo render(), asi nunca puede
+           mostrar un total distinto al de la lista. -->
+      <section class="view report" id="view-resumen" aria-labelledby="tab-resumen" hidden>
+        <h2 class="report__period">
+          <span class="report__eyebrow">Período en curso</span>
+          <span class="report__month" id="report-month">—</span>
+        </h2>
+
+        <div class="report__hero" id="report-hero">
+          <p class="report__total" id="report-total">$ 0,00</p>
+          <p class="report__caption">Total gastado en el mes</p>
+        </div>
+
+        <div class="report__empty" id="report-empty" hidden>
+          <p>Todavía no cargaste gastos este mes.</p>
+          <button type="button" class="btn btn--primary" id="report-add-btn">
+            Registrar el primer gasto
+          </button>
+        </div>
+
+        <div class="report__breakdown" id="report-breakdown" hidden>
+          <!-- Barra apilada al 100%: una franja por categoria, de mayor a menor.
+               Es decorativa para el lector de pantalla; los datos van en la lista. -->
+          <div class="report__bar" id="report-bar" aria-hidden="true"></div>
+          <ol class="report__rows" id="report-rows" aria-label="Gastos del mes por categoría"></ol>
+        </div>
+      </section>
     </main>
 
     <!-- Barra fija al alcance del pulgar. El formulario se despliega desde

@@ -65,3 +65,11 @@ What: All currency display in the UI goes through the single `formatAmount()` he
 ## When a summary section's visible `<h2>` title is replaced by multiple labeled sub-blocks,…
 
 What: When a summary section's visible `<h2>` title is replaced by multiple labeled sub-blocks, the section's accessible name moves from `aria-labelledby="summary-title"` to a direct `aria-label`, and any nested list that relied on that removed title for context (e.g. the category breakdown) needs its own explicit `aria-label` naming what it covers (the month). · Why: — · Where: index.html summary section. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-8 -->
+
+## El color de una categoría en el Resumen es fijo por id (`--cat-<id>`), nunca por puesto en el ranking
+
+What: Cada categoría tiene su custom property `--cat-<id>` en :root (con pasos distintos para tema claro y oscuro) y el JS pinta `var(--cat-${id}, var(--cat-fallback))`; "Sin categoría" es gris a propósito. · Why: el color sigue a la entidad, no al puesto: la misma categoría se ve igual aunque cambie de lugar de un mes a otro; al agregar una categoría en storage.js hay que agregar su token en styles.css o cae al gris de fallback. · Where: styles.css :root, js/app.js renderReport().
+
+## Un gasto sin categoría válida se muestra como el bucket `UNCATEGORIZED` ("❔ Sin categoría"), nunca como "Otros"
+
+What: `getCategory()` devuelve `UNCATEGORIZED` (id `sin-categoria`, no elegible en el formulario) para `categoryId` nulo, vacío o desconocido, e `isValidExpense()` acepta `categoryId == null`. · Why: antes un id desconocido se disfrazaba de "Otros" y un `categoryId` nulo se descartaba del store, o sea desaparecía del total; ahora suma al total y se ve agrupado; al editar uno, ningún chip queda marcado y guardar exige elegir categoría con el mensaje existente. · Where: js/storage.js UNCATEGORIZED, getCategory(), isValidExpense().

@@ -1,10 +1,10 @@
 /**
  * UI sobre la capa de storage: alta, correccion y baja de gastos, lista de lo
- * cargado y resumen del dia de hoy y del mes en curso.
+ * cargado, totales de hoy y del mes, y la vista Resumen del mes en curso.
  *
- * El resumen y la lista se derivan de listExpenses() en cada render. No hay
- * totales guardados aparte: corregir o borrar un gasto no puede dejar el
- * resumen desfasado, porque el resumen no es un estado, es una cuenta.
+ * Los totales, el resumen y la lista se derivan de listExpenses() en cada
+ * render. No hay totales guardados aparte: corregir o borrar un gasto no puede
+ * dejar el resumen desfasado, porque el resumen no es un estado, es una cuenta.
  */
 
 import {
@@ -28,7 +28,19 @@ const el = {
   summaryTotals: document.querySelector('.summary__totals'),
   summaryToday: document.getElementById('summary-today'),
   summaryTotal: document.getElementById('summary-total'),
-  summaryCategories: document.getElementById('summary-categories'),
+  tabs: document.querySelectorAll('.tab'),
+  views: {
+    gastos: document.getElementById('view-gastos'),
+    resumen: document.getElementById('view-resumen'),
+  },
+  reportMonth: document.getElementById('report-month'),
+  reportHero: document.getElementById('report-hero'),
+  reportTotal: document.getElementById('report-total'),
+  reportEmpty: document.getElementById('report-empty'),
+  reportAddBtn: document.getElementById('report-add-btn'),
+  reportBreakdown: document.getElementById('report-breakdown'),
+  reportBar: document.getElementById('report-bar'),
+  reportRows: document.getElementById('report-rows'),
   composer: document.getElementById('composer'),
   form: document.getElementById('expense-form'),
   formTitle: document.getElementById('form-title'),
@@ -59,6 +71,16 @@ const dateFormatter = new Intl.DateTimeFormat('es-AR', {
   month: 'short',
 });
 
+const monthFormatter = new Intl.DateTimeFormat('es-AR', {
+  month: 'long',
+  year: 'numeric',
+});
+
+const percentFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'percent',
+  maximumFractionDigits: 0,
+});
+
 function pad(n) {
   return String(n).padStart(2, '0');
 }
@@ -74,6 +96,13 @@ function formatDate(iso) {
 function currentMonthPrefix() {
   const now = new Date();
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+}
+
+/** Nombre del mes de un prefijo YYYY-MM, p.ej. "2026-09" -> "Septiembre de 2026". */
+function formatMonth(prefix) {
+  const [y, m] = prefix.split('-').map(Number);
+  const text = monthFormatter.format(new Date(y, m - 1, 1));
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** Centavos a lo que se tipea en el campo Monto, p.ej. 123456 -> "1234,56". */
@@ -145,29 +174,120 @@ function renderSummary(expenses) {
     '--total-chars',
     String(Math.max(todayText.length, monthText.length))
   );
+}
 
-  // Solo las categorias con gasto: una lista de ceros no le dice nada a nadie.
+/* ---------- Resumen del mes ---------- */
+
+/**
+ * Reparte 100 puntos entre montos enteros por mayor resto: los porcentajes
+ * enteros suman exactamente 100. Redondear cada uno por separado deja sumas de
+ * 99 o 101 que el usuario lee como un error de cuentas.
+ */
+function percentages(values) {
+  const total = values.reduce((sum, v) => sum + v, 0);
+  if (total === 0) return values.map(() => 0);
+  const exact = values.map((v) => (v * 100) / total);
+  const floors = exact.map(Math.floor);
+  let remaining = 100 - floors.reduce((sum, v) => sum + v, 0);
+  const order = exact
+    .map((v, i) => ({ i, rest: v - floors[i] }))
+    .sort((a, b) => b.rest - a.rest || a.i - b.i);
+  for (const { i } of order) {
+    if (remaining <= 0) break;
+    floors[i] += 1;
+    remaining -= 1;
+  }
+  return floors;
+}
+
+/**
+ * Agrupa por categoria, de mayor a menor. Los gastos sin categoria valida caen
+ * en el bucket UNCATEGORIZED via getCategory(): siguen sumando al total y se
+ * ven como grupo propio, no se pierden ni se mezclan con "Otros".
+ */
+function groupByCategory(expenses) {
   const byCategory = new Map();
-  for (const e of ofMonth) {
+  for (const e of expenses) {
     const id = getCategory(e.categoryId).id;
     byCategory.set(id, (byCategory.get(id) || 0) + e.amountCents);
   }
+  return [...byCategory.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id, cents]) => ({ category: getCategory(id), cents }));
+}
 
-  const rows = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
-  el.summaryCategories.replaceChildren(
-    ...rows.map(([id, cents]) => {
-      const cat = getCategory(id);
+function renderReport(expenses) {
+  const prefix = currentMonthPrefix();
+  const ofMonth = expenses.filter((e) => e.date.startsWith(prefix));
+  const totalCents = sumCents(ofMonth);
+
+  // El periodo se nombra siempre, con o sin gastos: es lo que le dice al usuario
+  // de que esta mirando el total.
+  el.reportMonth.textContent = formatMonth(prefix);
+
+  const isEmpty = ofMonth.length === 0;
+  el.reportEmpty.hidden = !isEmpty;
+  el.reportHero.hidden = isEmpty;
+  el.reportBreakdown.hidden = isEmpty;
+  if (isEmpty) {
+    el.reportBar.replaceChildren();
+    el.reportRows.replaceChildren();
+    return;
+  }
+
+  const totalText = formatAmount(totalCents);
+  el.reportTotal.textContent = totalText;
+  el.reportHero.style.setProperty('--total-chars', String(totalText.length));
+
+  const groups = groupByCategory(ofMonth);
+  const pcts = percentages(groups.map((g) => g.cents));
+  const maxCents = groups[0].cents;
+
+  // El color va con la categoria, no con el puesto: la misma categoria tiene el
+  // mismo color aunque cambie de lugar en el ranking de un mes a otro.
+  const colorOf = (cat) => `var(--cat-${cat.id}, var(--cat-fallback))`;
+
+  el.reportBar.replaceChildren(
+    ...groups.map((g) => {
+      const seg = document.createElement('span');
+      seg.className = 'report__segment';
+      seg.style.flexGrow = String(g.cents);
+      seg.style.background = colorOf(g.category);
+      return seg;
+    })
+  );
+
+  el.reportRows.replaceChildren(
+    ...groups.map((g, i) => {
+      const cat = g.category;
       const li = document.createElement('li');
-      li.className = 'summary__category';
-      li.dataset.categoryId = id;
+      li.className = 'report__row';
+      li.dataset.categoryId = cat.id;
+      li.style.setProperty('--c', colorOf(cat));
 
       const name = document.createElement('span');
+      name.className = 'report__name';
       name.textContent = `${cat.emoji} ${cat.label}`;
-      const value = document.createElement('span');
-      value.className = 'summary__category-amount';
-      value.textContent = formatAmount(cents);
 
-      li.append(name, value);
+      const pct = document.createElement('span');
+      pct.className = 'report__pct';
+      pct.textContent = percentFormatter.format(pcts[i] / 100);
+
+      const amount = document.createElement('span');
+      amount.className = 'report__amount';
+      amount.textContent = formatAmount(g.cents);
+
+      // Largo relativo a la categoria mayor: el ranking se lee de un vistazo.
+      // La parte sobre el total ya la dicen el porcentaje y la barra apilada.
+      const track = document.createElement('span');
+      track.className = 'report__track';
+      track.setAttribute('aria-hidden', 'true');
+      const fill = document.createElement('span');
+      fill.className = 'report__fill';
+      fill.style.width = `${(g.cents * 100) / maxCents}%`;
+      track.append(fill);
+
+      li.append(name, pct, amount, track);
       return li;
     })
   );
@@ -257,14 +377,43 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', renderIfDayChanged);
 
+/* ---------- Navegacion ---------- */
+
+/** Vista que pide la URL. Cualquier hash que no sea #resumen es la lista. */
+function currentView() {
+  return location.hash === '#resumen' ? 'resumen' : 'gastos';
+}
+
+/**
+ * Muestra la vista del hash y marca su pestaña. Las dos vistas se pintan
+ * siempre en render(); aca solo se decide cual se ve, asi cambiar de pestaña
+ * no recalcula nada y el resumen ya esta al dia cuando aparece.
+ */
+function renderNav() {
+  const view = currentView();
+  for (const [name, section] of Object.entries(el.views)) {
+    section.hidden = name !== view;
+  }
+  for (const tab of el.tabs) {
+    if (tab.getAttribute('href') === `#${view}`) tab.setAttribute('aria-current', 'page');
+    else tab.removeAttribute('aria-current');
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  renderNav();
+  window.scrollTo(0, 0);
+});
+
 /* ---------- Render ---------- */
 
-/** Unico punto de re-pintado: lista y resumen salen siempre del mismo dato. */
+/** Unico punto de re-pintado: lista, totales y resumen salen del mismo dato. */
 function render() {
   const expenses = listExpenses();
   renderedDay = todayISO();
   scheduleDayRollover();
   renderSummary(expenses);
+  renderReport(expenses);
   renderList(expenses);
 }
 
@@ -447,6 +596,7 @@ function closeForm() {
 }
 
 el.openBtn.addEventListener('click', () => openForm());
+el.reportAddBtn.addEventListener('click', () => openForm());
 el.cancelBtn.addEventListener('click', closeForm);
 
 el.form.addEventListener('submit', (event) => {
@@ -489,6 +639,7 @@ if (!isStorageAvailable()) {
 }
 
 renderCategories();
+renderNav();
 render();
 
 // El service worker es solo la capa de cache que hace que la app abra sin

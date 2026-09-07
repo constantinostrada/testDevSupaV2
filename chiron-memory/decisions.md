@@ -25,3 +25,19 @@ What: `.summary__totals` uses a CSS Grid with `auto-fit`/`minmax` columns so the
 ## The two summary totals' font size is computed against the column's container width and th…
 
 What: The two summary totals' font size is computed against the column's container width and the length of the longest formatted amount (published from JS as a `--total-chars` custom property), rather than scaled with `vw` units. · Why: a `vw`-based approach let large amounts (millions) wrap mid-digit (e.g. "1.234.567,8 / 9"), which technically didn't overflow but was unreadable; sizing off container width + digit count keeps long amounts intact or breaks cleanly at the currency symbol instead. · Where: styles.css, js/app.js renderSummary(). <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-5 -->
+
+## La navegación principal (Gastos / Resumen) va por `location.hash` (#gastos / #resumen), no por estado en memoria
+
+What: La navegación principal (Gastos / Resumen) va por `location.hash` (#gastos / #resumen) con pestañas `<a>` en el header sticky, no por estado en memoria ni por router. · Why: el botón atrás del celular vuelve a la vista anterior y una recarga conserva la vista, sin agregar código de routing; los ids de las secciones (`view-gastos`, `view-resumen`) no coinciden con los hashes a propósito para que el navegador no scrollee hasta ellas. · Where: index.html nav.tabs, js/app.js renderNav()/currentView().
+
+## Los porcentajes por categoría del Resumen se reparten por mayor resto para que sumen exactamente 100
+
+What: Los porcentajes enteros por categoría del Resumen se calculan con el método de mayor resto (`percentages()`), no redondeando cada uno por separado. · Why: redondear por separado da sumas de 99 o 101 que el usuario lee como error de cuentas; los montos ya suman exacto por ser enteros en centavos, faltaba que los porcentajes también. · Where: js/app.js percentages().
+
+## El gráfico del Resumen es HTML/CSS puro (barra apilada + barras por fila), sin librería
+
+What: La representación visual del desglose es una barra apilada al 100% (flex-grow = centavos, gap de 2px del color de la tarjeta) más una barra por fila relativa a la categoría mayor, todo en HTML/CSS, sin librería de gráficos ni SVG. · Why: coherente con la decisión "vanilla sin dependencias" y con el offline; la paleta por categoría se validó con el validador del skill dataviz contra las superficies reales (#ffffff claro, #1c1f28 oscuro) en pares adyacentes para daltonismo. · Where: styles.css .report__bar/.report__row, js/app.js renderReport().
+
+## El desglose por categoría se mudó de la tarjeta de totales (vista Gastos) a la vista Resumen
+
+What: La lista de categorías que vivía dentro de la tarjeta "Hoy / Este mes" se quitó de la vista Gastos y ahora existe solo en la vista Resumen, con monto, porcentaje y gráfico. · Why: evitar dos desgloses del mismo dato en pantallas distintas; la tarjeta de dos totales se conserva tal cual. · Where: index.html, js/app.js renderSummary()/renderReport().

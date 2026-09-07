@@ -25,3 +25,7 @@ What: `renderSummary()` (js/app.js) computes both the daily and monthly totals b
 ## Deleting an expense shows a toast with an undo ("Deshacer") action that restores the dele…
 
 What: Deleting an expense shows a toast with an undo ("Deshacer") action that restores the deleted expense if tapped, rather than requiring a confirmation step before deletion. · Why: gives users a fast recovery path after an accidental delete; confirmed by manual testing during this session (delete then undo both worked and both totals reverted correctly). · Where: js/app.js delete flow. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-9 -->
+
+## Las dos vistas se pintan siempre en el mismo `render()`; cambiar de pestaña solo alterna `hidden`
+
+What: `render()` pinta la vista Gastos (totales + lista) y la vista Resumen (`renderReport()`) en cada llamada, a partir del mismo `listExpenses()`; `renderNav()` solo decide cuál sección se ve. · Why: el resumen ya está al día cuando aparece y nunca puede mostrar un total distinto al de la lista; el rollover de mes sale gratis del mismo timer de medianoche + recheck en focus/visibilitychange que ya existía para "Hoy". · Where: js/app.js render(), renderReport(), renderNav().
