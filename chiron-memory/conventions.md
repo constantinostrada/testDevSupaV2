@@ -2,6 +2,14 @@
 
 A rule the codebase follows — naming, patterns, and where things live.
 
+## El color de una categoría en el Resumen es fijo por id (`--cat-<id>`), nunca por puesto en el ranking
+
+What: Cada categoría tiene su custom property `--cat-<id>` en :root (con pasos distintos para tema claro y oscuro) y el JS pinta `var(--cat-${id}, var(--cat-fallback))`; "Sin categoría" es gris a propósito. · Why: el color sigue a la entidad, no al puesto: la misma categoría se ve igual aunque cambie de lugar de un mes a otro; al agregar una categoría en storage.js hay que agregar su token en styles.css o cae al gris de fallback. · Where: styles.css :root, js/app.js renderReport().
+
+## Un gasto sin categoría válida se muestra como el bucket `UNCATEGORIZED` ("❔ Sin categoría"), nunca como "Otros"
+
+What: `getCategory()` devuelve `UNCATEGORIZED` (id `sin-categoria`, no elegible en el formulario) para `categoryId` nulo, vacío o desconocido, e `isValidExpense()` acepta `categoryId == null`. · Why: antes un id desconocido se disfrazaba de "Otros" y un `categoryId` nulo se descartaba del store, o sea desaparecía del total; ahora suma al total y se ve agrupado; al editar uno, ningún chip queda marcado y guardar exige elegir categoría con el mensaje existente. · Where: js/storage.js UNCATEGORIZED, getCategory(), isValidExpense().
+
 ## When adding the additive `deletedAt` field, `SCHEMA_VERSION` was bumped from 1 to 2 even…
 
 What: When adding the additive `deletedAt` field, `SCHEMA_VERSION` was bumped from 1 to 2 even though old v1 data is still valid as-is (no migration needed). · Why: makes the shape change explicit in the data even when backward compatibility means no transform is required. · Where: js/storage.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-3 -->
@@ -66,10 +74,30 @@ What: All currency display in the UI goes through the single `formatAmount()` he
 
 What: When a summary section's visible `<h2>` title is replaced by multiple labeled sub-blocks, the section's accessible name moves from `aria-labelledby="summary-title"` to a direct `aria-label`, and any nested list that relied on that removed title for context (e.g. the category breakdown) needs its own explicit `aria-label` naming what it covers (the month). · Why: — · Where: index.html summary section. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-8 -->
 
-## El color de una categoría en el Resumen es fijo por id (`--cat-<id>`), nunca por puesto en el ranking
+## Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS co…
 
-What: Cada categoría tiene su custom property `--cat-<id>` en :root (con pasos distintos para tema claro y oscuro) y el JS pinta `var(--cat-${id}, var(--cat-fallback))`; "Sin categoría" es gris a propósito. · Why: el color sigue a la entidad, no al puesto: la misma categoría se ve igual aunque cambie de lugar de un mes a otro; al agregar una categoría en storage.js hay que agregar su token en styles.css o cae al gris de fallback. · Where: styles.css :root, js/app.js renderReport().
+What: Los dos totales del resumen (hoy y mes) comparten cuerpo tipográfico, calculado en CSS contra el ancho de la columna (`100cqw`) y el largo del más largo de los dos, que `renderSummary()` publica en la custom property `--total-chars`. · Why: un monto de millones baja de cuerpo en vez de partirse a mitad de número o desbordar la tarjeta en una pantalla de 320px, y los dos totales siguen midiendo igual aunque uno sea más corto. · Where: styles.css (.summary__total), js/app.js. <!-- id: 8fec4991-75d9-42c1-b96b-de8d5e579b79-0 -->
 
-## Un gasto sin categoría válida se muestra como el bucket `UNCATEGORIZED` ("❔ Sin categoría"), nunca como "Otros"
+## Los porcentajes por categoría en el resumen se calculan con el método de mayor resto (lar…
 
-What: `getCategory()` devuelve `UNCATEGORIZED` (id `sin-categoria`, no elegible en el formulario) para `categoryId` nulo, vacío o desconocido, e `isValidExpense()` acepta `categoryId == null`. · Why: antes un id desconocido se disfrazaba de "Otros" y un `categoryId` nulo se descartaba del store, o sea desaparecía del total; ahora suma al total y se ve agrupado; al editar uno, ningún chip queda marcado y guardar exige elegir categoría con el mensaje existente. · Where: js/storage.js UNCATEGORIZED, getCategory(), isValidExpense().
+What: Los porcentajes por categoría en el resumen se calculan con el método de mayor resto (largest remainder), no con redondeo simple por categoría. · Why: el redondeo simple puede hacer que la suma de porcentajes no dé exactamente 100; el mayor resto lo garantiza en todos los casos, incluyendo empates y categorías con montos iguales. · Where: js/app.js (función de cálculo de porcentajes del resumen). <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-4 -->
+
+## La representación visual del desglose por categoría (barra apilada al 100% + ranking con…
+
+What: La representación visual del desglose por categoría (barra apilada al 100% + ranking con barra proporcional por fila) se implementó en HTML/CSS puro, sin librería de gráficos, con paleta validada para daltonismo en tema claro y oscuro. · Why: coherente con la decisión de proyecto de no agregar dependencias externas; se usó el skill `dataviz` para validar la paleta antes de escribir el CSS. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-7 -->
+
+## La barra apilada al 100% y las barras del ranking por categoría en la vista Resumen sigue…
+
+What: La barra apilada al 100% y las barras del ranking por categoría en la vista Resumen siguen el spec de marcas del skill `dataviz`: grosor máximo 24px (nunca llenan el carril), esquinas redondeadas de 4px solo en el extremo del dato, cuadradas en la base. · Why: consistencia visual validada por el skill en vez de un estilo de barra inventado ad-hoc. · Where: styles.css. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-11 -->
+
+## La etiqueta de período mostrada en el Resumen (ej
+
+What: La etiqueta de período mostrada en el Resumen (ej. "Septiembre de 2026") se calcula con la misma función `currentMonthPrefix()` que ya usaba la tarjeta "Este mes" para su total. · Why: garantiza por construcción que la etiqueta de período y el total mostrado nunca queden desincronizados, en vez de mantener dos cálculos de "mes actual" independientes. · Where: js/app.js. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-14 -->
+
+## El estado vacío del período en curso muestra un botón "Registrar el primer gasto" que abr…
+
+What: El estado vacío del período en curso muestra un botón "Registrar el primer gasto" que abre directamente el formulario de alta, en vez de mostrar un total en cero con gráfico vacío. · Why: invitar a la acción en lugar de mostrar datos que parecerían un bug o desincentivarían el uso. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-8 -->
+
+## Al editar un gasto cuyo categoryId es desconocido o vacío (bucket "Sin categoría"), el fo…
+
+What: Al editar un gasto cuyo categoryId es desconocido o vacío (bucket "Sin categoría"), el formulario de edición no preselecciona ningún chip de categoría, y el guardado sigue exigiendo elegir una categoría explícita (mismo mensaje de validación de antes) antes de aceptar. · Why: evita crear un chip "Sin categoría" seleccionable en el formulario, manteniendo la regla existente de que todo alta/edición debe declarar una categoría real; "sin categoría" solo se genera por datos legacy o importados, no por elección del usuario en el formulario. · Where: js/app.js (formulario de edición). <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-9 -->

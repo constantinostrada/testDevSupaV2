@@ -2,6 +2,10 @@
 
 A non-obvious pitfall or trap, learned the hard way.
 
+## La ventana de Chrome controlada por la extensión no baja de ~780px de ancho: `resize_window` a 390px no emula un teléfono
+
+What: Al verificar con las herramientas de Chrome, `resize_window` a 390×844 devolvió éxito pero `window.innerWidth` siguió en ~1887px; la app no se puede probar en viewport de teléfono por ese camino. · Why: — · Where: verificación manual en navegador. · Learned: verificar la lógica por JS en la página (totales vs. store, deltas de alta/edición/baja, fin de mes falseando `Date` y disparando `focus`) y dejar la revisión visual móvil para un dispositivo real o DevTools.
+
 ## Each storage mutation (`patchExpense` and friends) reads the store, builds the fully-upda…
 
 What: Each storage mutation (`patchExpense` and friends) reads the store, builds the fully-updated version in memory, and only calls `writeStore` once at the very end. · Why: if `writeStore` throws (persistence failure), nothing on disk has changed yet and there is no partially-applied in-memory state to roll back — guarantees the record stays in its prior state on failure, never an intermediate one. · Where: js/storage.js. <!-- id: 3a56a018-192b-41a8-9216-483a2eddfbc1-6 -->
@@ -46,6 +50,18 @@ What: The edit-expense form has no date field — editing an expense can only ch
 
 What: The two-total layout uses `container-type: inline-size` and `cqw` container-query units, the project's first CSS feature with a real browser-support floor (Chrome 105+ / Safari 16+). · Why: on unsupported browsers the declaration is simply invalid and the total falls back to its inherited 1rem font-size — smaller but still legible and non-overflowing, so the dependency degrades gracefully rather than breaking. · Where: styles.css .summary__totals. <!-- id: 653a9deb-e8b8-4e9a-87b5-be2d1ab48d56-6 -->
 
-## La ventana de Chrome controlada por la extensión no baja de ~780px de ancho: `resize_window` a 390px no emula un teléfono
+## Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruza…
 
-What: Al verificar con las herramientas de Chrome, `resize_window` a 390×844 devolvió éxito pero `window.innerWidth` siguió en ~1887px; la app no se puede probar en viewport de teléfono por ese camino. · Why: — · Where: verificación manual en navegador. · Learned: verificar la lógica por JS en la página (totales vs. store, deltas de alta/edición/baja, fin de mes falseando `Date` y disparando `focus`) y dejar la revisión visual móvil para un dispositivo real o DevTools.
+What: Un total "de hoy" derivado en cada render igual queda viejo si la app queda abierta cruzando la medianoche, porque sin interacción nadie vuelve a renderizar. · Why: hace falta un timeout programado a la próxima medianoche local (calculada por componentes de fecha, no sumando 24h, para los días de cambio de horario) MÁS un re-chequeo en `visibilitychange`/`focus`: en segundo plano el navegador throttlea o suspende el timer, así que el timer solo no alcanza. · Where: js/app.js. <!-- id: 77b40e0f-231c-4ae5-ba03-71bf690b3c9c-0 -->
+
+## Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sirv…
+
+What: Verificando cambios de CSS/JS en el navegador, el precache del service worker seguía sirviendo la versión anterior del archivo aunque el servidor local mandara `Cache-Control: no-store`. · Why: el sw cachea el app shell con estrategia cache-first, y el precache se llena en el `install`, es decir con el estado del archivo en ese momento; subir `CACHE_VERSION` no alcanza si se sigue editando después. · Where: sw.js · Learned: antes de medir un cambio a mano hay que desregistrar el service worker y borrar los caches (`caches.keys()` + `delete`), si no se está midiendo código viejo. Es la misma trampa que la caché HTTP, por otra vía. <!-- id: d03ba33e-675a-46c8-b12c-13bcedba95cc-0 -->
+
+## `getCategory()` y `isValidExpense()` en js/storage.js podían ocultar gastos sin categoría…
+
+What: `getCategory()` y `isValidExpense()` en js/storage.js podían ocultar gastos sin categoría del total (mapeo silencioso a "Otros" o rechazo por tipo). · Why: cualquier feature que sume por categoría debe verificar primero cómo storage.js trata `categoryId` nulo/desconocido, porque el bug es silencioso (no lanza error, solo desaparece o se disfraza). · Learned: revisar getCategory()/isValidExpense() antes de confiar en que la suma por categoría coincide con el total general. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-1 -->
+
+## La suma de los montos por categoría en el Resumen coincide exactamente con el total del p…
+
+What: La suma de los montos por categoría en el Resumen coincide exactamente con el total del período "por construcción" (sin ajuste), porque `amountCents` es entero y las categorías particionan el conjunto de gastos sin resto; el único valor que necesita el ajuste de mayor resto es el porcentaje entero mostrado, no el monto. · Why: evita gastar esfuerzo buscando un bug de redondeo en los montos cuando en realidad el desajuste solo puede aparecer en los porcentajes. <!-- id: ca111ac1-4681-445a-9a27-42fcd0cb24b7-12 -->
